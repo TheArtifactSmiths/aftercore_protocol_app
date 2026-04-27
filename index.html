@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AfterCore Protocol</title>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Barlow+Condensed:ital,wght@0,700;0,900;1,900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #0c0a09; color: #e7e5e4; margin: 0; -webkit-tap-highlight-color: transparent; overflow: hidden; }
+        .font-display { font-family: 'Barlow Condensed', sans-serif; }
+        
+        .scanline { 
+            width: 100%; 
+            height: 1px; 
+            background: rgba(234, 88, 12, 0.25); 
+            position: absolute; 
+            z-index: 100; 
+            top: 0; 
+            left: 0;
+            animation: scan 4s linear infinite; 
+            pointer-events: none; 
+        }
+        @keyframes scan { 0% { top: 0%; } 100% { top: 100%; } }
+        
+        .img-container { aspect-ratio: 4 / 5; max-height: 50vh; width: 100%; }
+        
+        .main-content-area { 
+            flex: 1; 
+            height: 100vh; 
+            overflow-y: auto; 
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch; 
+        }
+        .sidebar-area { 
+            height: 100vh; 
+            overflow-y: auto; 
+            overflow-x: hidden;
+        }
+
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: #0c0a09; }
+        ::-webkit-scrollbar-thumb { background: #ea580c; border-radius: 2px; }
+        
+        .splash-logo {
+            filter: drop-shadow(0 0 35px rgba(234, 88, 12, 0.45));
+            animation: logoEntrance 1.8s ease-out forwards;
+        }
+
+        .slide-up-text {
+            animation: textSlideUp 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            animation-delay: 0.6s;
+            opacity: 0;
+        }
+
+        @keyframes logoEntrance { 
+            from { opacity: 0; filter: drop-shadow(0 0 0px rgba(234, 88, 12, 0)) blur(10px); transform: scale(0.92); } 
+            to { opacity: 1; filter: drop-shadow(0 0 35px rgba(234, 88, 12, 0.45)) blur(0); transform: scale(1); } 
+        }
+        
+        @keyframes textSlideUp { 
+            from { opacity: 0; transform: translateY(40px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
+
+        .fade-in { animation: fadeIn 0.8s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .pulse-slow { animation: pulse 3s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 0.8; } 50% { opacity: 0.3; } }
+
+        .floating-controls {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .music-control {
+            background: rgba(234, 88, 12, 0.15);
+            border: 1px solid rgba(234, 88, 12, 0.4);
+            backdrop-filter: blur(12px);
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ea580c;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            opacity: 0.6;
+        }
+        .music-control:hover, .music-control:active { 
+            opacity: 1; 
+            transform: scale(1.05); 
+            background: rgba(234, 88, 12, 0.25);
+        }
+        .music-control:active { transform: scale(0.9); }
+        .music-control.muted { color: #57534e; border-color: rgba(87, 83, 78, 0.4); }
+
+        .brand-logo-small {
+            width: 60px;
+            height: auto;
+            opacity: 0.15;
+            filter: grayscale(1) brightness(1.5);
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+        }
+    </style>
+</head>
+<body class="selection:bg-orange-600 selection:text-white">
+    <div id="root"></div>
+
+    <script>
+        const e = React.createElement;
+        const { useState, useMemo, useEffect, useRef } = React;
+
+        const LOGOS = {
+            main: "https://www.dropbox.com/scl/fi/oxseqryjmrbsao7li72jf/AfterCore_Protocol_Logo_2K.png?rlkey=gng6jl2szx86glqqe315k4t62&raw=1",
+            rustborn: "https://www.dropbox.com/scl/fi/st6p4ijpj2bjxid5svutj/Rustborn-Logo_1024.png?rlkey=q3l689hqwkezmrqpc5c4cjqnb&raw=1",
+            brand: "https://www.dropbox.com/scl/fi/81dlrmnqvtrihc36d3m71/Logo_Artifact-Smiths_Dark_Trs_256px.png?rlkey=8lniz4wx242kd7w5oxzxqbtkd&raw=1"
+        };
+
+        const MUSIC_URL = "https://www.dropbox.com/scl/fi/p0o9xcthm080f9lm4evfv/5-Burnt-Horizons.mp3?rlkey=s3yo3u8rgakvzszbdmsxj21le&raw=1";
+
+        const getDirectImageUrl = (url) => {
+            if (!url) return "";
+            if (url.includes("dropbox.com")) {
+                let directUrl = url.split('?')[0] + "?raw=1";
+                const rlkeyMatch = url.match(/rlkey=([^&]+)/);
+                if (rlkeyMatch) directUrl += "&rlkey=" + rlkeyMatch[1];
+                return directUrl;
+            }
+            return url;
+        };
+
+        const Icon = ({ name, size = 18, className = "" }) => {
+            const iconRef = useRef(null);
+            useEffect(() => {
+                if (window.lucide) {
+                    window.lucide.createIcons();
+                }
+            }, [name]);
+            return e('i', { 
+                ref: iconRef,
+                'data-lucide': name, 
+                style: { width: size, height: size }, 
+                className: className 
+            });
+        };
+
+        const RUSTBORN_DATA = {
+            faction_rules: [
+                { name: "Fe en la Máquina Muerta", desc: "Una vez por turno, cada unidad Rustborn puede repetir una única tirada fallida de Impactar, Herir o Salvación." },
+                { name: "Doctrina de Chatarra", desc: "Las unidades Rustborn no sufren penalizadores al disparar armas pesadas tras moverse." }
+            ],
+            categories: [
+                {
+                    name: "Mando y Especialistas",
+                    units: [
+                        { id: "rust-captain", name: "Rust Captain", image: "https://www.dropbox.com/scl/fi/o9g8e4mqwmv5pgf2n0o6k/Rustborn-CS_Rust_Captain_E2.png?rlkey=ttya45is782u3mdx24y415yoa&dl=0", power: "20", points: 50, stats: { M: '6"', R: '3+', T: '4', A: '3', H: '2', Ld: '8', Sv: '4+' }, composition: "1 Rust Captain", wargear: "Pistola, Cuchillo de trinchera improvisado.", abilities: [{ name: "Orden del Capataz", desc: "Repetir chequeo de ataque o Ld a 6\"." }], weapons: [{ name: "Cuchillo de trinchera", range: "Melee", type: "Combate", a: "4", wsbs: "4+", s: "3", ap: "0", d: "1" }, { name: "Machete de chatarra", range: "Melee", type: "Combate", a: "4", wsbs: "4+", s: "4", ap: "-1", d: "1" }], keywords: ["RUSTBORN", "COMMAND", "INFANTRY"] },
+                        { id: "flag-bearer", name: "Flag Bearer", image: "https://www.dropbox.com/scl/fi/cexagudz7svbdgzyxgmxw/Rustborn-CS_Flag_Bearer_E2.png?rlkey=9ainxitnv47puuekfi3nd2cdx&dl=0", power: "10", points: 25, stats: { M: '6"', R: '4+', T: '4', A: '2', H: '1', Ld: '7', Sv: '5+' }, composition: "1 Flag Bearer", wargear: "Estandarte, Rifles de pulso caseros.", abilities: [{ name: "Inspiración Tribal", desc: "Miniaturas a 3\" +1 Ld." }], weapons: [{ name: "Pistola de pólvora", range: "12\"", type: "Asalto", a: "1", wsbs: "4+", s: "4", ap: "-1", d: "1" }], keywords: ["RUSTBORN", "OFFICER"] },
+                        { id: "field-tech", name: "Field Tech", image: "https://www.dropbox.com/scl/fi/u6sytcllhs0usiu41vqgj/Rustborn-CS_Field_Tech_E2.png?rlkey=vmflv6ihnwwqiwaa5hx7ca13q&dl=0", power: "10", points: 25, stats: { M: '6"', R: '4+', T: '4', A: '2', H: '1', Ld: '6', Sv: '5+' }, composition: "1 Field Tech", wargear: "Kits médicos. Pistola corta.", abilities: [{ name: "Reparación de Campo", desc: "Restaura 1 herida a 3\"." }], weapons: [{ name: "Pistola de pólvora", range: "12\"", type: "Asalto", a: "1", wsbs: "4+", s: "4", ap: "-1", d: "1" }], keywords: ["RUSTBORN", "TECH"] },
+                        { id: "comms-handler", name: "Comms Skullhandler", image: "https://www.dropbox.com/scl/fi/qgdct3nd6tlk7h6z56su1/Rustborn-CS_Comms_Skullhandler_E2.png?rlkey=4glqzvtp3brd9hjgjhhc4g8fc&dl=0", power: "10", points: 25, stats: { M: '6"', R: '4+', T: '4', A: '2', H: '1', Ld: '6', Sv: '5+' }, composition: "1 Comms Skullhandler", wargear: "Comunicaciones.", abilities: [{ name: "Red Táctica", desc: "Repetir disparo a 12\"." }], weapons: [{ name: "Rifle de pólvora", range: "24\"", type: "Asalto", a: "1", wsbs: "4+", s: "4", ap: "0", d: "1" }], keywords: ["RUSTBORN", "COMMS"] },
+                        { id: "gunner", name: "Gunner", image: "https://www.dropbox.com/scl/fi/94rvmd006xbilm5y1s0v5/Rustborn-CS_Gunner_E2.png?rlkey=5s01tyocgpsrhysbodpf7boi8&dl=0", power: "15", points: 25, stats: { M: '6"', R: '4+', T: '4', A: '2', H: '1', Ld: '6', Sv: '5+' }, composition: "1 Gunner", wargear: "Armas pesadas.", abilities: [{ name: "Fuego Pesado", desc: "+1 Daño." }], weapons: [{ name: "Cañón pesado", range: "36\"", type: "Asalto", a: "D6", wsbs: "4+", s: "12", ap: "-3", d: "D6+1" }], keywords: ["RUSTBORN", "GUNNER"] }
+                    ]
+                },
+                {
+                    name: "Infantería de Milicia",
+                    units: [
+                        { id: "infantry-squad", name: "Infantry Squad", image: "https://www.dropbox.com/scl/fi/557gyx2xpo0mqbw2fndri/Infantry-Squad_E2.png?rlkey=1ef2tr4acrr8hp79il08zb4fl&dl=0", power: "45", points: 100, isMultiStat: true, multiStats: [{ name: "Soldado", M: '6"', R: '4+', T: '4', A: '2', H: '1', Ld: '6', Sv: '5+' }, { name: "Sargento", M: '6"', R: '4+', T: '4', A: '3', H: '1', Ld: '7', Sv: '5+' }], stats: {}, composition: "1 Sargento y 7 Soldados", wargear: "Armas de pólvora.", abilities: [{ name: "Milicia Oxidada", desc: "+1 Sv en objetivos." }, { name: "Capataz", desc: "Sargento ignora 1 herida inestable." }], weapons: [{ name: "Machete", range: "Melee", type: "Melee", a: "3", wsbs: "4+", s: "4", ap: "-1", d: "1" }, { name: "Rifle", range: "24\"", type: "Asalto", a: "1", wsbs: "4+", s: "4", ap: "0", d: "1" }], keywords: ["RUSTBORN", "INFANTRY"] },
+                        { id: "medic", name: "Infantry Squad Medic", image: "https://www.dropbox.com/scl/fi/vmbvtkxnog5ywuj8dit7r/Rustborn_Infantry_Doctor_01.png?rlkey=frnzzksof7ud2odaemce3g47c&dl=0", power: "30", points: 30, stats: { M: '6"', R: '4+', T: '4', A: '2', H: '1', Ld: '6', Sv: '5+' }, composition: "1 Medic", wargear: "Botiquín.", abilities: [{ name: "Curación", desc: "Cura 1 herida a 3\"." }], weapons: [{ name: "Pistola", range: "12\"", type: "Asalto", a: "1", wsbs: "4+", s: "4", ap: "-1", d: "1" }], keywords: ["RUSTBORN", "MEDIC"] },
+                        { id: "heavy-crew", name: "Infantry Heavy Gun Crew", image: "https://www.dropbox.com/scl/fi/cwomlgpd7r9meemlew9fo/Rustborn_Infantry_HeavyGunner_01.png?rlkey=o2xlout6tcaxr8ha53w2p9mw9&dl=0", power: "20", points: 40, stats: { M: '4"', R: '4+', T: '4', A: '2', H: '1', Ld: '6', Sv: '5+' }, composition: "1 Crew", wargear: "Arma emplazada.", abilities: [{ name: "Fuego Fijo", desc: "Dispara cada turno." }], weapons: [{ name: "Cañón Pesado", range: "36\"", type: "Asalto", a: "D6", wsbs: "4+", s: "12", ap: "-3", d: "D6+1" }], keywords: ["RUSTBORN", "SUPPORT"] }
+                    ]
+                },
+                {
+                    name: "Bestias y Mutantes",
+                    units: [
+                        { id: "spinemetal", name: "Rustbeast Spinemetal", image: "https://www.dropbox.com/scl/fi/557gyx2xpo0mqbw2fndri/Infantry-Squad_E2.png?rlkey=1ef2tr4acrr8hp79il08zb4fl&dl=0", power: "25", points: 60, stats: { M: '6"', R: '3+', T: '6', A: '4', H: '4', Ld: '7', Sv: '4+' }, composition: "1 Spinemetal", wargear: "Gatlings.", abilities: [{ name: "Fuego Implacable", desc: "2 disparos a 12\"." }], weapons: [{ name: "Gatling Arms", range: "18\"", type: "Asalto", a: "8", wsbs: "3+", s: "4", ap: "0", d: "1" }], keywords: ["RUSTBORN", "BEAST"] },
+                        { id: "skullcrusher", name: "Rustbeast Skullcrusher", image: "https://www.dropbox.com/scl/fi/cwomlgpd7r9meemlew9fo/Rustborn_Infantry_HeavyGunner_01.png?rlkey=o2xlout6tcaxr8ha53w2p9mw9&dl=0", power: "20", points: 70, stats: { M: '5"', R: '-', T: '6', A: '5', H: '5', Ld: '7', Sv: '4+' }, composition: "1 Skullcrusher", wargear: "Guanteletes.", abilities: [{ name: "Destructor", desc: "+1 Daño Melee." }], weapons: [{ name: "Guanteletes", range: "Melee", type: "Melee", a: "4", wsbs: "3+", s: "x2", ap: "-3", d: "3" }], keywords: ["RUSTBORN", "BEAST"] },
+                        { id: "firespine", name: "Rustbeast Firespine", image: "https://www.dropbox.com/scl/fi/vd5de3x0q61ew91iqxvu8/Rustborn_TankWalker_01.png?rlkey=vy1h04wq80x89ij5bhd2flago&dl=0", power: "25", points: 70, stats: { M: '6"', R: '3+', T: '5', A: '3', H: '4', Ld: '7', Sv: '4+' }, composition: "1 Firespine", wargear: "Lanzacohetes.", abilities: [{ name: "Explosivo", desc: "Área 3\"." }], weapons: [{ name: "Lanzacohetes", range: "24\"", type: "Asalto", a: "D3", wsbs: "3+", s: "9", ap: "-2", d: "3" }], keywords: ["RUSTBORN", "BEAST"] }
+                    ]
+                },
+                {
+                    name: "Élites",
+                    units: [
+                        { id: "scrap-priest", name: "Scrap Priest", image: "https://www.dropbox.com/scl/fi/u6sytcllhs0usiu41vqgj/Rustborn-CS_Field_Tech_E2.png?rlkey=vmflv6ihnwwqiwaa5hx7ca13q&dl=0", power: "65", points: 115, stats: { M: '6"', R: '3+', T: '4', A: '3', H: '3', Ld: '9', Sv: '4+' }, composition: "1 Scrap Priest", wargear: "Bastón de inducción, Pistola de chatarra.", abilities: [{ name: "Curación Técnica", desc: "Unidades a 6\" obtienen +1 al impactar con armas de disparo." },{ name: "Ritual de la máquina muerta", desc: "+1 T y Sv a unidades amigas a 6¨ durante un turno" }, { name: "Multiherramienta Implante", desc: "Permite disparar o reparar como ataque a distancia R3+" }], weapons: [{ name: "Bastón de Inducción", range: "Melee", type: "Melee", a: "3", wsbs: "3+", s: "+2", ap: "-2", d: "2" }, { name: "Pistola de Chatarra", range: "12\"", type: "Asalto", a: "D6", wsbs: "3+", s: "4", ap: "0", d: "1" }], keywords: ["RUSTBORN", "ELITE", "CHARACTER", "TECH"] }
+                    ]
+                },
+                {
+                    name: "Vehículos",
+                    units: [
+                        { id: "tank-walker", name: "Tank Walker", image: "https://www.dropbox.com/scl/fi/vd5de3x0q61ew91iqxvu8/Rustborn_TankWalker_01.png?rlkey=vy1h04wq80x89ij5bhd2flago&dl=0", power: "80", points: 200, stats: { M: '6"', R: '3+', T: '10', A: '4', H: '10', Ld: '7', Sv: '3+' }, composition: "1 Tank Walker", wargear: "2 ametralladoras giratorias, lanza granadas.", abilities: [{ name: "Bendición Oxidada", desc: "Dos disparos ametralladoras + 1 granada." }, { name: "Blindaje resistente", desc: "+1 Sv contra armas pequeñas." }], weapons: [{ name: "Ametralladora Giratoria", range: "24\"", type: "Asalto", a: "6", wsbs: "3+", s: "5", ap: "-1", d: "1" }, { name: "Lanza Granadas", range: "24\"", type: "Asalto", a: "D6", wsbs: "4+", s: "4", ap: "0", d: "1" }], keywords: ["RUSTBORN", "TANK", "HEAVY"] }
+                    ]
+                }
+            ]
+        };
+
+        const StatBox = ({ label, value }) => e('div', { className: "flex-1 min-w-[50px] flex flex-col items-center justify-center border-r last:border-r-0 border-orange-900/30 px-1 py-4 bg-stone-900/40" },
+            e('span', { className: "text-[9px] font-black text-orange-500/80 uppercase tracking-widest mb-1" }, label),
+            e('span', { className: "text-xl md:text-2xl font-display font-black text-white italic leading-none" }, value)
+        );
+
+        const MultiStatRow = ({ name, stats }) => e('div', { className: "flex flex-col border-b border-orange-900/20 last:border-0 bg-stone-900/40" },
+            e('div', { className: "px-6 py-2 bg-stone-950/30 text-[10px] font-black text-orange-500 uppercase italic tracking-tighter border-b border-orange-900/10" }, name),
+            e('div', { className: "flex flex-row overflow-x-auto" },
+                Object.entries(stats).map(([key, val]) => e('div', { key, className: "flex-1 min-w-[60px] flex flex-col items-center justify-center border-r last:border-r-0 border-orange-900/20 py-3" },
+                    e('span', { className: "text-[8px] font-black text-stone-600 uppercase mb-1" }, key),
+                    e('span', { className: "text-lg font-display font-black text-white italic" }, val)
+                ))
+            )
+        );
+
+        const App = () => {
+            const [view, setView] = useState('splash');
+            const allUnits = useMemo(() => RUSTBORN_DATA.categories.flatMap(c => c.units), []);
+            const [activeUnitId, setActiveUnitId] = useState(allUnits[0].id);
+            const [isSidebarOpen, setSidebarOpen] = useState(false);
+            const [isMuted, setIsMuted] = useState(false);
+            
+            const audioRef = useRef(new Audio(MUSIC_URL));
+
+            useEffect(() => {
+                const audio = audioRef.current;
+                audio.loop = true;
+                return () => {
+                    audio.pause();
+                };
+            }, []);
+
+            const startApp = () => {
+                setView('factions');
+                audioRef.current.play().catch(err => console.log("Audio auto-play blocked", err));
+            };
+
+            const toggleMute = (ev) => {
+                ev.stopPropagation();
+                const audio = audioRef.current;
+                audio.muted = !isMuted;
+                setIsMuted(!isMuted);
+                
+                if (audio.paused && !isMuted) {
+                    audio.play().catch(() => {});
+                }
+            };
+
+            const activeUnit = useMemo(() => allUnits.find(u => u.id === activeUnitId), [activeUnitId, allUnits]);
+            const displayImageUrl = useMemo(() => getDirectImageUrl(activeUnit?.image), [activeUnit]);
+
+            if (view === 'splash') {
+                return e('div', { 
+                    onClick: startApp,
+                    className: "fixed inset-0 bg-[#0c0a09] flex flex-col items-center justify-center p-6 cursor-pointer overflow-hidden" 
+                },
+                    e('div', { className: "scanline" }),
+                    e('div', { className: "relative w-full max-w-2xl flex flex-col items-center" },
+                        e('img', { 
+                            src: LOGOS.main, 
+                            className: "w-full h-auto splash-logo" 
+                        }),
+                        e('div', { className: "mt-12 text-center slide-up-text" },
+                            e('p', { className: "text-orange-600 font-display font-black italic uppercase tracking-[0.3em] pulse-slow text-sm" }, "PULSA PARA INICIAR")
+                        )
+                    )
+                );
+            }
+
+            return e('div', { className: "relative" },
+                e('div', { className: "floating-controls" },
+                    e('button', { 
+                        onClick: toggleMute,
+                        className: `music-control shadow-lg ${isMuted ? 'muted' : ''}`,
+                        title: isMuted ? "Activar sonido" : "Silenciar"
+                    }, 
+                        e(Icon, { name: isMuted ? "volume-x" : "volume-2", size: 24 })
+                    ),
+                    e('img', { 
+                        src: getDirectImageUrl(LOGOS.brand), 
+                        className: "brand-logo-small",
+                        alt: "The Artifact Smiths" 
+                    })
+                ),
+
+                view === 'factions' ? e('div', { className: "fixed inset-0 bg-[#0c0a09] p-8 flex flex-col items-center justify-center main-content-area" },
+                    e('div', { className: "scanline" }),
+                    e('div', { className: "mb-12 text-center fade-in" },
+                        e('h2', { className: "font-display font-black text-3xl text-white uppercase italic tracking-tighter" }, "SELECCIONAR ", e('span', { className: "text-orange-600" }, "FACCIÓN"))
+                    ),
+                    e('div', { className: "grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl w-full" },
+                        e('div', { 
+                            onClick: () => setView('rustborn'),
+                            className: "group relative aspect-video bg-stone-900 rounded-3xl border border-orange-900/30 overflow-hidden cursor-pointer hover:border-orange-500 transition-all shadow-2xl"
+                        },
+                            e('img', { src: LOGOS.rustborn, className: "absolute inset-0 w-full h-full object-contain p-8 group-hover:scale-110 transition-transform duration-500 opacity-60" }),
+                            e('div', { className: "absolute inset-0 bg-gradient-to-t from-orange-950/80 to-transparent flex flex-col justify-end p-8" },
+                                e('span', { className: "text-white font-display font-black text-4xl uppercase italic tracking-tighter" }, "MILICIA ", e('span', { className: "text-orange-500" }, "RUSTBORN")),
+                                e('span', { className: "text-orange-500/60 text-[10px] font-black tracking-widest mt-2" }, "DISPONIBLE")
+                            )
+                        ),
+                        e('div', { className: "group relative aspect-video bg-stone-900/40 rounded-3xl border border-stone-800 overflow-hidden grayscale opacity-40 cursor-not-allowed" },
+                            e('div', { className: "absolute inset-0 flex items-center justify-center" },
+                                e(Icon, { name: "lock", size: 48, className: "text-stone-700" })
+                            ),
+                            e('div', { className: "absolute inset-0 flex flex-col justify-end p-8" },
+                                e('span', { className: "text-stone-600 font-display font-black text-4xl uppercase italic tracking-tighter" }, "NUEVA FACCIÓN"),
+                                e('span', { className: "text-stone-700 text-[10px] font-black tracking-widest mt-2" }, "BLOQUEADO")
+                            )
+                        )
+                    ),
+                    e('button', { 
+                        onClick: () => setView('splash'),
+                        className: "mt-12 text-stone-600 hover:text-orange-600 transition-colors flex items-center gap-2 uppercase text-[10px] font-black" 
+                    }, e(Icon, { name: "arrow-left" }), "VOLVER")
+                ) : e('div', { className: "h-screen flex flex-col lg:flex-row overflow-hidden" },
+                    e('aside', { className: `sidebar-area fixed inset-y-0 left-0 z-50 w-72 bg-stone-900 border-r border-orange-900/20 transform transition-transform lg:translate-x-0 lg:static ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}` },
+                        e('div', { className: "p-6" },
+                            e('div', { className: "flex items-center gap-2 mb-4" },
+                                e('button', { onClick: () => setView('factions'), className: "p-2 -ml-2 text-stone-600 hover:text-orange-500" }, e(Icon, { name: "chevron-left", size: 24 })),
+                                e('img', { src: LOGOS.rustborn, className: "h-10 w-auto" }),
+                                e('h1', { className: "font-display font-black text-xl text-white italic uppercase tracking-tighter" }, "RUSTBORN")
+                            ),
+                            
+                            e('div', { className: "mb-6 p-4 bg-orange-950/20 rounded-2xl border border-orange-900/30" },
+                                e('h4', { className: "text-[9px] font-black text-orange-500 uppercase mb-3 tracking-widest" }, "REGLAS DE FACCIÓN"),
+                                RUSTBORN_DATA.faction_rules.map((rule, idx) => e('div', { key: idx, className: "mb-3 last:mb-0" },
+                                    e('div', { className: "text-[10px] font-black text-white uppercase italic" }, rule.name),
+                                    e('div', { className: "text-[9px] text-orange-200/60 leading-tight mt-1" }, rule.desc)
+                                ))
+                            ),
+
+                            RUSTBORN_DATA.categories.map((cat, idx) => e('div', { key: idx, className: "mb-6" },
+                                e('h3', { className: "text-[10px] font-black text-stone-600 uppercase tracking-widest mb-3" }, cat.name),
+                                cat.units.map(unit => e('button', {
+                                    key: unit.id,
+                                    onClick: () => { setActiveUnitId(unit.id); setSidebarOpen(false); },
+                                    className: `w-full flex items-center gap-3 p-2 rounded-xl border mb-1 transition-all ${activeUnitId === unit.id ? 'bg-orange-600 border-orange-400 text-white shadow-lg' : 'bg-stone-800/10 border-transparent text-stone-500 hover:text-stone-300'}`
+                                },
+                                    e('div', { className: "w-8 h-8 rounded-lg overflow-hidden flex-shrink-0 bg-stone-800" }, e('img', { src: getDirectImageUrl(unit.image), className: "w-full h-full object-cover" })),
+                                    e('span', { className: "text-[11px] font-black uppercase italic truncate" }, unit.name)
+                                ))
+                            ))
+                        )
+                    ),
+                    e('main', { className: "main-content-area bg-[#0a0807] relative" },
+                        e('header', { className: "lg:hidden bg-stone-900 p-4 flex items-center justify-between sticky top-0 z-40 border-b border-orange-900/20" },
+                            e('button', { onClick: () => setSidebarOpen(true), className: "p-2 text-orange-500" }, e(Icon, { name: "menu" })),
+                            e('img', { src: LOGOS.rustborn, className: "h-6 w-auto" }),
+                            e('button', { onClick: () => setView('factions'), className: "p-2 text-stone-600" }, e(Icon, { name: "grid" }))
+                        ),
+                        activeUnit && e('div', { className: "p-4 lg:p-10 max-w-5xl mx-auto fade-in pb-20" },
+                            e('div', { className: "relative rounded-[1.5rem] md:rounded-[2rem] overflow-hidden bg-stone-900 border border-stone-800 shadow-2xl mb-8" },
+                                e('div', { className: "relative z-10 flex justify-center p-4" }, e('img', { src: displayImageUrl, className: "img-container object-contain", alt: activeUnit.name })),
+                                e('div', { className: "scanline" }),
+                                e('div', { className: "absolute bottom-0 left-0 w-full p-6 z-30 bg-gradient-to-t from-stone-950 via-stone-950/40 to-transparent" },
+                                    e('div', { className: "flex gap-2 mb-2" },
+                                        e('div', { className: "bg-orange-600 text-white px-2 py-0.5 rounded text-[10px] font-black italic uppercase" }, `POWER: ${activeUnit.power}`),
+                                        e('div', { className: "bg-stone-800 text-orange-500 px-2 py-0.5 rounded text-[10px] font-black italic uppercase" }, `PTS: ${activeUnit.points}`)
+                                    ),
+                                    e('h2', { className: "text-3xl md:text-5xl font-display font-black text-white uppercase italic tracking-tighter" }, activeUnit.name)
+                                )
+                            ),
+                            activeUnit.isMultiStat ? e('div', { className: "border border-orange-900/30 rounded-2xl overflow-hidden mb-8 shadow-lg" },
+                                activeUnit.multiStats.map((ms, i) => e(MultiStatRow, { key: i, name: ms.name, stats: { M: ms.M, R: ms.R, T: ms.T, A: ms.A, H: ms.H, Ld: ms.Ld, Sv: ms.Sv } }))
+                            ) : e('div', { className: "flex flex-wrap border border-orange-900/30 rounded-2xl overflow-hidden mb-8 bg-stone-900/40 shadow-lg" },
+                                Object.entries(activeUnit.stats).map(([k, v]) => e(StatBox, { key: k, label: k, value: v }))
+                            ),
+                            e('div', { className: "grid grid-cols-1 md:grid-cols-2 gap-6 mb-8" },
+                                e('section', { className: "bg-stone-900/60 p-6 rounded-2xl border border-stone-800" },
+                                    e('h4', { className: "text-[10px] font-black text-orange-500 uppercase tracking-widest mb-4" }, "HABILIDADES"),
+                                    activeUnit.abilities.map((a, i) => e('div', { key: i, className: "mb-3 border-l-2 border-orange-600/30 pl-3" },
+                                        e('h5', { className: "text-xs font-black text-white uppercase italic" }, a.name),
+                                        e('p', { className: "text-[11px] text-stone-400 mt-1" }, a.desc)
+                                    ))
+                                ),
+                                e('section', { className: "bg-stone-900/60 p-6 rounded-2xl border border-stone-800" },
+                                    e('h4', { className: "text-[10px] font-black text-orange-500 uppercase tracking-widest mb-4" }, "COMPOSICIÓN Y EQUIPO"),
+                                    e('div', { className: "text-[11px] space-y-4" },
+                                        e('div', null, e('b', { className: "text-stone-500 block mb-1 uppercase tracking-tighter" }, "Unidad"), e('p', null, activeUnit.composition)),
+                                        e('div', null, e('b', { className: "text-stone-500 block mb-1 uppercase tracking-tighter" }, "Equipo"), e('p', { className: "text-stone-300" }, activeUnit.wargear))
+                                    )
+                                )
+                            ),
+                            e('section', { className: "bg-stone-900/80 border border-stone-800 rounded-2xl overflow-hidden shadow-2xl mb-12" },
+                                e('div', { className: "overflow-x-auto" },
+                                    e('table', { className: "w-full text-left text-xs" },
+                                        e('thead', null, e('tr', { className: "bg-stone-950/50 text-[9px] font-black text-stone-600 uppercase" },
+                                            ['Arma', 'Alc.', 'A', 'BS/WS', 'S', 'AP', 'D'].map(h => e('th', { key: h, className: "px-4 py-3" }, h))
+                                        )),
+                                        e('tbody', { className: "divide-y divide-stone-800/50" },
+                                            activeUnit.weapons.map((w, i) => e('tr', { key: i },
+                                                e('td', { className: "px-4 py-4" }, e('span', { className: "font-display font-black text-white uppercase italic text-base block" }, w.name), e('span', { className: "text-[8px] text-stone-600 font-bold uppercase" }, w.type)),
+                                                e('td', { className: "px-4 py-4 text-stone-400" }, w.range),
+                                                e('td', { className: "px-4 py-4 font-black text-orange-500" }, w.a),
+                                                e('td', { className: "px-4 py-4 font-black text-white" }, w.wsbs),
+                                                e('td', { className: "px-4 py-4 font-black text-white" }, w.s),
+                                                e('td', { className: "px-4 py-4 font-black text-stone-500" }, w.ap),
+                                                e('td', { className: "px-4 py-4 font-black text-orange-600 italic text-lg" }, w.d)
+                                            ))
+                                        )
+                                    )
+                                )
+                            ),
+                            e('section', { className: "mt-4 flex flex-wrap gap-2" },
+                                activeUnit.keywords.map((kw, idx) => e('span', { key: idx, className: "px-3 py-1 bg-stone-800 border border-stone-700 text-[10px] font-black text-stone-400 uppercase tracking-widest rounded-full" }, kw))
+                            )
+                        )
+                    )
+                )
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(e(App));
+    </script>
+</body>
+</html>
