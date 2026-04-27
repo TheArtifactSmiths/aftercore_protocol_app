@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AfterCore Protocol</title>
+    <title>AfterCore Protocol - GitHub Edition</title>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -124,24 +124,33 @@
         const e = React.createElement;
         const { useState, useMemo, useEffect, useRef } = React;
 
+        // --- CONFIGURACIÓN DE GITHUB ---
+        const GITHUB_USER = "TheArtifactSmiths";
+        const GITHUB_REPO = "aftercore_protocol_app";
+        const GITHUB_BRANCH = "main";
+        const GITHUB_BASE_URL = `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${GITHUB_BRANCH}/`;
+
+        /**
+         * Procesa URLs para asegurar que carguen correctamente.
+         */
+        const processUrl = (path) => {
+            if (!path) return "";
+            if (path.startsWith('http')) return path;
+            
+            const cleanPath = path.startsWith('/') ? path.substring(1) : path;
+            // Codificamos cada segmento para evitar problemas con espacios o caracteres raros
+            const encodedPath = cleanPath.split('/').map(segment => encodeURIComponent(segment)).join('/');
+            
+            return GITHUB_BASE_URL + encodedPath;
+        };
+
         const LOGOS = {
-            main: "https://www.dropbox.com/scl/fi/oxseqryjmrbsao7li72jf/AfterCore_Protocol_Logo_2K.png?rlkey=gng6jl2szx86glqqe315k4t62&raw=1",
-            rustborn: "https://www.dropbox.com/scl/fi/st6p4ijpj2bjxid5svutj/Rustborn-Logo_1024.png?rlkey=q3l689hqwkezmrqpc5c4cjqnb&raw=1",
-            brand: "https://www.dropbox.com/scl/fi/81dlrmnqvtrihc36d3m71/Logo_Artifact-Smiths_Dark_Trs_256px.png?rlkey=8lniz4wx242kd7w5oxzxqbtkd&raw=1"
+            main: processUrl("AfterCore_Protocol_Logo_2K.png"),
+            rustborn: processUrl("Rustborn/UI/Rustborn Logo_1024.png"),
+            brand: processUrl("Brand/Logo_Artifact-Smiths_Dark_Trs_256px.png")
         };
 
-        const MUSIC_URL = "https://www.dropbox.com/scl/fi/p0o9xcthm080f9lm4evfv/5-Burnt-Horizons.mp3?rlkey=s3yo3u8rgakvzszbdmsxj21le&raw=1";
-
-        const getDirectImageUrl = (url) => {
-            if (!url) return "";
-            if (url.includes("dropbox.com")) {
-                let directUrl = url.split('?')[0] + "?raw=1";
-                const rlkeyMatch = url.match(/rlkey=([^&]+)/);
-                if (rlkeyMatch) directUrl += "&rlkey=" + rlkeyMatch[1];
-                return directUrl;
-            }
-            return url;
-        };
+        const MUSIC_URL = processUrl("Rustborn/Music/5 Burnt Horizons.mp3");
 
         const Icon = ({ name, size = 18, className = "" }) => {
             const iconRef = useRef(null);
@@ -167,39 +176,39 @@
                 {
                     name: "Mando y Especialistas",
                     units: [
-                        { id: "rust-captain", name: "Rust Captain", image: "https://www.dropbox.com/scl/fi/o9g8e4mqwmv5pgf2n0o6k/Rustborn-CS_Rust_Captain_E2.png?rlkey=ttya45is782u3mdx24y415yoa&dl=0", power: "20", points: 50, stats: { M: '6"', R: '3+', T: '4', A: '3', H: '2', Ld: '8', Sv: '4+' }, composition: "1 Rust Captain", wargear: "Pistola, Cuchillo de trinchera improvisado.", abilities: [{ name: "Orden del Capataz", desc: "Repetir chequeo de ataque o Ld a 6\"." }], weapons: [{ name: "Cuchillo de trinchera", range: "Melee", type: "Combate", a: "4", wsbs: "4+", s: "3", ap: "0", d: "1" }, { name: "Machete de chatarra", range: "Melee", type: "Combate", a: "4", wsbs: "4+", s: "4", ap: "-1", d: "1" }], keywords: ["RUSTBORN", "COMMAND", "INFANTRY"] },
-                        { id: "flag-bearer", name: "Flag Bearer", image: "https://www.dropbox.com/scl/fi/cexagudz7svbdgzyxgmxw/Rustborn-CS_Flag_Bearer_E2.png?rlkey=9ainxitnv47puuekfi3nd2cdx&dl=0", power: "10", points: 25, stats: { M: '6"', R: '4+', T: '4', A: '2', H: '1', Ld: '7', Sv: '5+' }, composition: "1 Flag Bearer", wargear: "Estandarte, Rifles de pulso caseros.", abilities: [{ name: "Inspiración Tribal", desc: "Miniaturas a 3\" +1 Ld." }], weapons: [{ name: "Pistola de pólvora", range: "12\"", type: "Asalto", a: "1", wsbs: "4+", s: "4", ap: "-1", d: "1" }], keywords: ["RUSTBORN", "OFFICER"] },
-                        { id: "field-tech", name: "Field Tech", image: "https://www.dropbox.com/scl/fi/u6sytcllhs0usiu41vqgj/Rustborn-CS_Field_Tech_E2.png?rlkey=vmflv6ihnwwqiwaa5hx7ca13q&dl=0", power: "10", points: 25, stats: { M: '6"', R: '4+', T: '4', A: '2', H: '1', Ld: '6', Sv: '5+' }, composition: "1 Field Tech", wargear: "Kits médicos. Pistola corta.", abilities: [{ name: "Reparación de Campo", desc: "Restaura 1 herida a 3\"." }], weapons: [{ name: "Pistola de pólvora", range: "12\"", type: "Asalto", a: "1", wsbs: "4+", s: "4", ap: "-1", d: "1" }], keywords: ["RUSTBORN", "TECH"] },
-                        { id: "comms-handler", name: "Comms Skullhandler", image: "https://www.dropbox.com/scl/fi/qgdct3nd6tlk7h6z56su1/Rustborn-CS_Comms_Skullhandler_E2.png?rlkey=4glqzvtp3brd9hjgjhhc4g8fc&dl=0", power: "10", points: 25, stats: { M: '6"', R: '4+', T: '4', A: '2', H: '1', Ld: '6', Sv: '5+' }, composition: "1 Comms Skullhandler", wargear: "Comunicaciones.", abilities: [{ name: "Red Táctica", desc: "Repetir disparo a 12\"." }], weapons: [{ name: "Rifle de pólvora", range: "24\"", type: "Asalto", a: "1", wsbs: "4+", s: "4", ap: "0", d: "1" }], keywords: ["RUSTBORN", "COMMS"] },
-                        { id: "gunner", name: "Gunner", image: "https://www.dropbox.com/scl/fi/94rvmd006xbilm5y1s0v5/Rustborn-CS_Gunner_E2.png?rlkey=5s01tyocgpsrhysbodpf7boi8&dl=0", power: "15", points: 25, stats: { M: '6"', R: '4+', T: '4', A: '2', H: '1', Ld: '6', Sv: '5+' }, composition: "1 Gunner", wargear: "Armas pesadas.", abilities: [{ name: "Fuego Pesado", desc: "+1 Daño." }], weapons: [{ name: "Cañón pesado", range: "36\"", type: "Asalto", a: "D6", wsbs: "4+", s: "12", ap: "-3", d: "D6+1" }], keywords: ["RUSTBORN", "GUNNER"] }
+                        { id: "rust-captain", name: "Rust Captain", image: "Rustborn/Units/CommandSquad/Rustborn CS_Rust_Captain_E2.png", power: "20", points: 50, stats: { M: '6"', R: '3+', T: '4', A: '3', H: '2', Ld: '8', Sv: '4+' }, composition: "1 Rust Captain", wargear: "Pistola, Cuchillo de trinchera improvisado.", abilities: [{ name: "Orden del Capataz", desc: "Repetir chequeo de ataque o Ld a 6\"." }], weapons: [{ name: "Cuchillo de trinchera", range: "Melee", type: "Combate", a: "4", wsbs: "4+", s: "3", ap: "0", d: "1" }, { name: "Machete de chatarra", range: "Melee", type: "Combate", a: "4", wsbs: "4+", s: "4", ap: "-1", d: "1" }], keywords: ["RUSTBORN", "COMMAND", "INFANTRY"] },
+                        { id: "flag-bearer", name: "Flag Bearer", image: "Rustborn/Units/CommandSquad/Rustborn CS_Flag_Bearer_E2.png", power: "10", points: 25, stats: { M: '6"', R: '4+', T: '4', A: '2', H: '1', Ld: '7', Sv: '5+' }, composition: "1 Flag Bearer", wargear: "Estandarte, Rifles de pulso caseros.", abilities: [{ name: "Inspiración Tribal", desc: "Miniaturas a 3\" +1 Ld." }], weapons: [{ name: "Pistola de pólvora", range: "12\"", type: "Asalto", a: "1", wsbs: "4+", s: "4", ap: "-1", d: "1" }], keywords: ["RUSTBORN", "OFFICER"] },
+                        { id: "field-tech", name: "Field Tech", image: "Rustborn/Units/CommandSquad/Rustborn CS_Field_Tech_E2.png", power: "10", points: 25, stats: { M: '6"', R: '4+', T: '4', A: '2', H: '1', Ld: '6', Sv: '5+' }, composition: "1 Field Tech", wargear: "Kits médicos. Pistola corta.", abilities: [{ name: "Reparación de Campo", desc: "Restaura 1 herida a 3\"." }], weapons: [{ name: "Pistola de pólvora", range: "12\"", type: "Asalto", a: "1", wsbs: "4+", s: "4", ap: "-1", d: "1" }], keywords: ["RUSTBORN", "TECH"] },
+                        { id: "comms-handler", name: "Comms Skullhandler", image: "Rustborn/Units/CommandSquad/Rustborn CS_Comms_Skullhandler_E2.png", power: "10", points: 25, stats: { M: '6"', R: '4+', T: '4', A: '2', H: '1', Ld: '6', Sv: '5+' }, composition: "1 Comms Skullhandler", wargear: "Comunicaciones.", abilities: [{ name: "Red Táctica", desc: "Repetir disparo a 12\"." }], weapons: [{ name: "Rifle de pólvora", range: "24\"", type: "Asalto", a: "1", wsbs: "4+", s: "4", ap: "0", d: "1" }], keywords: ["RUSTBORN", "COMMS"] },
+                        { id: "gunner", name: "Gunner", image: "Rustborn/Units/CommandSquad/Rustborn CS_Gunner_E2.png", power: "15", points: 25, stats: { M: '6"', R: '4+', T: '4', A: '2', H: '1', Ld: '6', Sv: '5+' }, composition: "1 Gunner", wargear: "Armas pesadas.", abilities: [{ name: "Fuego Pesado", desc: "+1 Daño." }], weapons: [{ name: "Cañón pesado", range: "36\"", type: "Asalto", a: "D6", wsbs: "4+", s: "12", ap: "-3", d: "D6+1" }], keywords: ["RUSTBORN", "GUNNER"] }
                     ]
                 },
                 {
                     name: "Infantería de Milicia",
                     units: [
-                        { id: "infantry-squad", name: "Infantry Squad", image: "https://www.dropbox.com/scl/fi/557gyx2xpo0mqbw2fndri/Infantry-Squad_E2.png?rlkey=1ef2tr4acrr8hp79il08zb4fl&dl=0", power: "45", points: 100, isMultiStat: true, multiStats: [{ name: "Soldado", M: '6"', R: '4+', T: '4', A: '2', H: '1', Ld: '6', Sv: '5+' }, { name: "Sargento", M: '6"', R: '4+', T: '4', A: '3', H: '1', Ld: '7', Sv: '5+' }], stats: {}, composition: "1 Sargento y 7 Soldados", wargear: "Armas de pólvora.", abilities: [{ name: "Milicia Oxidada", desc: "+1 Sv en objetivos." }, { name: "Capataz", desc: "Sargento ignora 1 herida inestable." }], weapons: [{ name: "Machete", range: "Melee", type: "Melee", a: "3", wsbs: "4+", s: "4", ap: "-1", d: "1" }, { name: "Rifle", range: "24\"", type: "Asalto", a: "1", wsbs: "4+", s: "4", ap: "0", d: "1" }], keywords: ["RUSTBORN", "INFANTRY"] },
-                        { id: "medic", name: "Infantry Squad Medic", image: "https://www.dropbox.com/scl/fi/vmbvtkxnog5ywuj8dit7r/Rustborn_Infantry_Doctor_01.png?rlkey=frnzzksof7ud2odaemce3g47c&dl=0", power: "30", points: 30, stats: { M: '6"', R: '4+', T: '4', A: '2', H: '1', Ld: '6', Sv: '5+' }, composition: "1 Medic", wargear: "Botiquín.", abilities: [{ name: "Curación", desc: "Cura 1 herida a 3\"." }], weapons: [{ name: "Pistola", range: "12\"", type: "Asalto", a: "1", wsbs: "4+", s: "4", ap: "-1", d: "1" }], keywords: ["RUSTBORN", "MEDIC"] },
-                        { id: "heavy-crew", name: "Infantry Heavy Gun Crew", image: "https://www.dropbox.com/scl/fi/cwomlgpd7r9meemlew9fo/Rustborn_Infantry_HeavyGunner_01.png?rlkey=o2xlout6tcaxr8ha53w2p9mw9&dl=0", power: "20", points: 40, stats: { M: '4"', R: '4+', T: '4', A: '2', H: '1', Ld: '6', Sv: '5+' }, composition: "1 Crew", wargear: "Arma emplazada.", abilities: [{ name: "Fuego Fijo", desc: "Dispara cada turno." }], weapons: [{ name: "Cañón Pesado", range: "36\"", type: "Asalto", a: "D6", wsbs: "4+", s: "12", ap: "-3", d: "D6+1" }], keywords: ["RUSTBORN", "SUPPORT"] }
+                        { id: "infantry-squad", name: "Infantry Squad", image: "Rustborn/Units/InfantrySquad/Infantry Squad_E2.png", power: "45", points: 100, isMultiStat: true, multiStats: [{ name: "Soldado", M: '6"', R: '4+', T: '4', A: '2', H: '1', Ld: '6', Sv: '5+' }, { name: "Sargento", M: '6"', R: '4+', T: '4', A: '3', H: '1', Ld: '7', Sv: '5+' }], stats: {}, composition: "1 Sargento y 7 Soldados", wargear: "Armas de pólvora.", abilities: [{ name: "Milicia Oxidada", desc: "+1 Sv en objetivos." }, { name: "Capataz", desc: "Sargento ignora 1 herida inestable." }], weapons: [{ name: "Machete", range: "Melee", type: "Melee", a: "3", wsbs: "4+", s: "4", ap: "-1", d: "1" }, { name: "Rifle", range: "24\"", type: "Asalto", a: "1", wsbs: "4+", s: "4", ap: "0", d: "1" }], keywords: ["RUSTBORN", "INFANTRY"] },
+                        { id: "medic", name: "Infantry Squad Medic", image: "Rustborn/Units/InfantrySquad/Rustborn_Infantry_Doctor_01.png", power: "30", points: 30, stats: { M: '6"', R: '4+', T: '4', A: '2', H: '1', Ld: '6', Sv: '5+' }, composition: "1 Medic", wargear: "Botiquín.", abilities: [{ name: "Curación", desc: "Cura 1 herida a 3\"." }], weapons: [{ name: "Pistola", range: "12\"", type: "Asalto", a: "1", wsbs: "4+", s: "4", ap: "-1", d: "1" }], keywords: ["RUSTBORN", "MEDIC"] },
+                        { id: "heavy-crew", name: "Infantry Heavy Gun Crew", image: "Rustborn/Units/InfantrySquad/Rustborn_Infantry_HeavyGunner_01.png", power: "20", points: 40, stats: { M: '4"', R: '4+', T: '4', A: '2', H: '1', Ld: '6', Sv: '5+' }, composition: "1 Crew", wargear: "Arma emplazada.", abilities: [{ name: "Fuego Fijo", desc: "Dispara cada turno." }], weapons: [{ name: "Cañón Pesado", range: "36\"", type: "Asalto", a: "D6", wsbs: "4+", s: "12", ap: "-3", d: "D6+1" }], keywords: ["RUSTBORN", "SUPPORT"] }
                     ]
                 },
                 {
                     name: "Bestias y Mutantes",
                     units: [
-                        { id: "spinemetal", name: "Rustbeast Spinemetal", image: "https://www.dropbox.com/scl/fi/557gyx2xpo0mqbw2fndri/Infantry-Squad_E2.png?rlkey=1ef2tr4acrr8hp79il08zb4fl&dl=0", power: "25", points: 60, stats: { M: '6"', R: '3+', T: '6', A: '4', H: '4', Ld: '7', Sv: '4+' }, composition: "1 Spinemetal", wargear: "Gatlings.", abilities: [{ name: "Fuego Implacable", desc: "2 disparos a 12\"." }], weapons: [{ name: "Gatling Arms", range: "18\"", type: "Asalto", a: "8", wsbs: "3+", s: "4", ap: "0", d: "1" }], keywords: ["RUSTBORN", "BEAST"] },
-                        { id: "skullcrusher", name: "Rustbeast Skullcrusher", image: "https://www.dropbox.com/scl/fi/cwomlgpd7r9meemlew9fo/Rustborn_Infantry_HeavyGunner_01.png?rlkey=o2xlout6tcaxr8ha53w2p9mw9&dl=0", power: "20", points: 70, stats: { M: '5"', R: '-', T: '6', A: '5', H: '5', Ld: '7', Sv: '4+' }, composition: "1 Skullcrusher", wargear: "Guanteletes.", abilities: [{ name: "Destructor", desc: "+1 Daño Melee." }], weapons: [{ name: "Guanteletes", range: "Melee", type: "Melee", a: "4", wsbs: "3+", s: "x2", ap: "-3", d: "3" }], keywords: ["RUSTBORN", "BEAST"] },
-                        { id: "firespine", name: "Rustbeast Firespine", image: "https://www.dropbox.com/scl/fi/vd5de3x0q61ew91iqxvu8/Rustborn_TankWalker_01.png?rlkey=vy1h04wq80x89ij5bhd2flago&dl=0", power: "25", points: 70, stats: { M: '6"', R: '3+', T: '5', A: '3', H: '4', Ld: '7', Sv: '4+' }, composition: "1 Firespine", wargear: "Lanzacohetes.", abilities: [{ name: "Explosivo", desc: "Área 3\"." }], weapons: [{ name: "Lanzacohetes", range: "24\"", type: "Asalto", a: "D3", wsbs: "3+", s: "9", ap: "-2", d: "3" }], keywords: ["RUSTBORN", "BEAST"] }
+                        { id: "spinemetal", name: "Rustbeast Spinemetal", image: "Rustborn/Units/Rustbeast/RustbornPLACEHOLDER.png", power: "25", points: 60, stats: { M: '6"', R: '3+', T: '6', A: '4', H: '4', Ld: '7', Sv: '4+' }, composition: "1 Spinemetal", wargear: "Gatlings.", abilities: [{ name: "Fuego Implacable", desc: "2 disparos a 12\"." }], weapons: [{ name: "Gatling Arms", range: "18\"", type: "Asalto", a: "8", wsbs: "3+", s: "4", ap: "0", d: "1" }], keywords: ["RUSTBORN", "BEAST"] },
+                        { id: "skullcrusher", name: "Rustbeast Skullcrusher", image: "Rustborn/Units/Rustbeast/RustbornPLACEHOLDER.png", power: "20", points: 70, stats: { M: '5"', R: '-', T: '6', A: '5', H: '5', Ld: '7', Sv: '4+' }, composition: "1 Skullcrusher", wargear: "Guanteletes.", abilities: [{ name: "Destructor", desc: "+1 Daño Melee." }], weapons: [{ name: "Guanteletes", range: "Melee", type: "Melee", a: "4", wsbs: "3+", s: "x2", ap: "-3", d: "3" }], keywords: ["RUSTBORN", "BEAST"] },
+                        { id: "firespine", name: "Rustbeast Firespine", image: "Rustborn/Units/Rustbeast/RustbornPLACEHOLDER.png", power: "25", points: 70, stats: { M: '6"', R: '3+', T: '5', A: '3', H: '4', Ld: '7', Sv: '4+' }, composition: "1 Firespine", wargear: "Lanzacohetes.", abilities: [{ name: "Explosivo", desc: "Área 3\"." }], weapons: [{ name: "Lanzacohetes", range: "24\"", type: "Asalto", a: "D3", wsbs: "3+", s: "9", ap: "-2", d: "3" }], keywords: ["RUSTBORN", "BEAST"] }
                     ]
                 },
                 {
                     name: "Élites",
                     units: [
-                        { id: "scrap-priest", name: "Scrap Priest", image: "https://www.dropbox.com/scl/fi/u6sytcllhs0usiu41vqgj/Rustborn-CS_Field_Tech_E2.png?rlkey=vmflv6ihnwwqiwaa5hx7ca13q&dl=0", power: "65", points: 115, stats: { M: '6"', R: '3+', T: '4', A: '3', H: '3', Ld: '9', Sv: '4+' }, composition: "1 Scrap Priest", wargear: "Bastón de inducción, Pistola de chatarra.", abilities: [{ name: "Curación Técnica", desc: "Unidades a 6\" obtienen +1 al impactar con armas de disparo." },{ name: "Ritual de la máquina muerta", desc: "+1 T y Sv a unidades amigas a 6¨ durante un turno" }, { name: "Multiherramienta Implante", desc: "Permite disparar o reparar como ataque a distancia R3+" }], weapons: [{ name: "Bastón de Inducción", range: "Melee", type: "Melee", a: "3", wsbs: "3+", s: "+2", ap: "-2", d: "2" }, { name: "Pistola de Chatarra", range: "12\"", type: "Asalto", a: "D6", wsbs: "3+", s: "4", ap: "0", d: "1" }], keywords: ["RUSTBORN", "ELITE", "CHARACTER", "TECH"] }
+                        { id: "scrap-priest", name: "Scrap Priest", image: "Rustborn/Units/ScrapPriest/RustbornPLACEHOLDER.png", power: "65", points: 115, stats: { M: '6"', R: '3+', T: '4', A: '3', H: '3', Ld: '9', Sv: '4+' }, composition: "1 Scrap Priest", wargear: "Bastón de inducción, Pistola de chatarra.", abilities: [{ name: "Curación Técnica", desc: "Unidades a 6\" obtienen +1 al impactar con armas de disparo." },{ name: "Ritual de la máquina muerta", desc: "+1 T y Sv a unidades amigas a 6¨ durante un turno" }, { name: "Multiherramienta Implante", desc: "Permite disparar o reparar como ataque a distancia R3+" }], weapons: [{ name: "Bastón de Inducción", range: "Melee", type: "Melee", a: "3", wsbs: "3+", s: "+2", ap: "-2", d: "2" }, { name: "Pistola de Chatarra", range: "12\"", type: "Asalto", a: "D6", wsbs: "3+", s: "4", ap: "0", d: "1" }], keywords: ["RUSTBORN", "ELITE", "CHARACTER", "TECH"] }
                     ]
                 },
                 {
                     name: "Vehículos",
                     units: [
-                        { id: "tank-walker", name: "Tank Walker", image: "https://www.dropbox.com/scl/fi/vd5de3x0q61ew91iqxvu8/Rustborn_TankWalker_01.png?rlkey=vy1h04wq80x89ij5bhd2flago&dl=0", power: "80", points: 200, stats: { M: '6"', R: '3+', T: '10', A: '4', H: '10', Ld: '7', Sv: '3+' }, composition: "1 Tank Walker", wargear: "2 ametralladoras giratorias, lanza granadas.", abilities: [{ name: "Bendición Oxidada", desc: "Dos disparos ametralladoras + 1 granada." }, { name: "Blindaje resistente", desc: "+1 Sv contra armas pequeñas." }], weapons: [{ name: "Ametralladora Giratoria", range: "24\"", type: "Asalto", a: "6", wsbs: "3+", s: "5", ap: "-1", d: "1" }, { name: "Lanza Granadas", range: "24\"", type: "Asalto", a: "D6", wsbs: "4+", s: "4", ap: "0", d: "1" }], keywords: ["RUSTBORN", "TANK", "HEAVY"] }
+                        { id: "tank-walker", name: "Tank Walker", image: "Rustborn/Units/TankWalker/Rustborn_TankWalker_01.png", power: "80", points: 200, stats: { M: '6"', R: '3+', T: '10', A: '4', H: '10', Ld: '7', Sv: '3+' }, composition: "1 Tank Walker", wargear: "2 ametralladoras giratorias, lanza granadas.", abilities: [{ name: "Bendición Oxidada", desc: "Dos disparos ametralladoras + 1 granada." }, { name: "Blindaje resistente", desc: "+1 Sv contra armas pequeñas." }], weapons: [{ name: "Ametralladora Giratoria", range: "24\"", type: "Asalto", a: "6", wsbs: "3+", s: "5", ap: "-1", d: "1" }, { name: "Lanza Granadas", range: "24\"", type: "Asalto", a: "D6", wsbs: "4+", s: "4", ap: "0", d: "1" }], keywords: ["RUSTBORN", "TANK", "HEAVY"] }
                     ]
                 }
             ]
@@ -254,7 +263,8 @@
             };
 
             const activeUnit = useMemo(() => allUnits.find(u => u.id === activeUnitId), [activeUnitId, allUnits]);
-            const displayImageUrl = useMemo(() => getDirectImageUrl(activeUnit?.image), [activeUnit]);
+            // Importante: Forzamos la actualización de la URL cuando cambia el ID
+            const displayImageUrl = useMemo(() => processUrl(activeUnit?.image), [activeUnit?.image]);
 
             if (view === 'splash') {
                 return e('div', { 
@@ -265,7 +275,8 @@
                     e('div', { className: "relative w-full max-w-2xl flex flex-col items-center" },
                         e('img', { 
                             src: LOGOS.main, 
-                            className: "w-full h-auto splash-logo" 
+                            className: "w-full h-auto splash-logo",
+                            onError: (ev) => ev.target.style.display = 'none'
                         }),
                         e('div', { className: "mt-12 text-center slide-up-text" },
                             e('p', { className: "text-orange-600 font-display font-black italic uppercase tracking-[0.3em] pulse-slow text-sm" }, "PULSA PARA INICIAR")
@@ -284,7 +295,7 @@
                         e(Icon, { name: isMuted ? "volume-x" : "volume-2", size: 24 })
                     ),
                     e('img', { 
-                        src: getDirectImageUrl(LOGOS.brand), 
+                        src: LOGOS.brand, 
                         className: "brand-logo-small",
                         alt: "The Artifact Smiths" 
                     })
@@ -344,7 +355,7 @@
                                     onClick: () => { setActiveUnitId(unit.id); setSidebarOpen(false); },
                                     className: `w-full flex items-center gap-3 p-2 rounded-xl border mb-1 transition-all ${activeUnitId === unit.id ? 'bg-orange-600 border-orange-400 text-white shadow-lg' : 'bg-stone-800/10 border-transparent text-stone-500 hover:text-stone-300'}`
                                 },
-                                    e('div', { className: "w-8 h-8 rounded-lg overflow-hidden flex-shrink-0 bg-stone-800" }, e('img', { src: getDirectImageUrl(unit.image), className: "w-full h-full object-cover" })),
+                                    e('div', { className: "w-8 h-8 rounded-lg overflow-hidden flex-shrink-0 bg-stone-800" }, e('img', { src: processUrl(unit.image), className: "w-full h-full object-cover" })),
                                     e('span', { className: "text-[11px] font-black uppercase italic truncate" }, unit.name)
                                 ))
                             ))
@@ -358,7 +369,17 @@
                         ),
                         activeUnit && e('div', { className: "p-4 lg:p-10 max-w-5xl mx-auto fade-in pb-20" },
                             e('div', { className: "relative rounded-[1.5rem] md:rounded-[2rem] overflow-hidden bg-stone-900 border border-stone-800 shadow-2xl mb-8" },
-                                e('div', { className: "relative z-10 flex justify-center p-4" }, e('img', { src: displayImageUrl, className: "img-container object-contain", alt: activeUnit.name })),
+                                e('div', { className: "relative z-10 flex justify-center p-4" }, 
+                                    e('img', { 
+                                        key: activeUnitId, // Forzamos al navegador a recargar la imagen al cambiar el ID
+                                        src: displayImageUrl, 
+                                        className: "img-container object-contain", 
+                                        alt: activeUnit.name,
+                                        onError: (ev) => { 
+                                            ev.target.src = 'https://via.placeholder.com/400x500/1c1917/ea580c?text=ERROR+EN+RUTA+DE+GITHUB';
+                                        }
+                                    })
+                                ),
                                 e('div', { className: "scanline" }),
                                 e('div', { className: "absolute bottom-0 left-0 w-full p-6 z-30 bg-gradient-to-t from-stone-950 via-stone-950/40 to-transparent" },
                                     e('div', { className: "flex gap-2 mb-2" },
